@@ -12,9 +12,10 @@ public class Intervals {
 
     private static final String[] ACCIDENTALS = {"##", "#", "b", "bb"};
 
-    /**
-     * Validates the passed arguments and returns the last note for the chosen interval
-     */
+    private static final String[] ALLOWEDNOTES = {"Cb", "C", "C#", "Db", "D", "D#", "Eb", "E", "E#", "Fb", "F", "F#",
+            "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B", "B#"};
+
+
     public static String intervalConstruction(String[] args) {
         String firstNote = args[1];
         Order order = args.length == 3 ? validateOrder(args[2].toUpperCase()) : Order.ASC;
@@ -23,7 +24,10 @@ public class Intervals {
         int semitone = Integer.parseInt(semitoneAndDegree[1]);
         int degree = Integer.parseInt(semitoneAndDegree[2]);
 
-        return getSecondNote(firstNote, semitone, degree, order);
+        if (isNoteAllowed(firstNote)){
+            return getSecondNote(firstNote, semitone, degree, order);
+        }
+        return "Input note is not allowed";
     }
 
     public static String intervalIdentification(String[] args) {
@@ -31,7 +35,6 @@ public class Intervals {
         String lastNote = args[1];
         Order order = args.length == 3 ? validateOrder(args[2].toUpperCase()) : Order.ASC;
         String[] interval = findInterval(firstNote, lastNote, order);
-
         return interval[0];
     }
 
@@ -40,38 +43,46 @@ public class Intervals {
         int secondNoteAccidental = checkAccidental(lastNote);
         int firstNoteIndex = getNoteIndex(firstNote, SEMITONE_SCALE);
         int lastNoteIndex = getNoteIndex(lastNote, SEMITONE_SCALE);
-       if(order == Order.ASC){
-           int actualSemitone = 0;
-           for (int i = firstNoteIndex; i <= SEMITONE_SCALE.length; i++) {
-               if (SEMITONE_SCALE[i].equals("_")) {
-                   actualSemitone++;
-               }
-               if (i == lastNoteIndex){
-                   return actualSemitone - firstNoteAccidental - secondNoteAccidental;
-               }
-               if (i == SEMITONE_SCALE.length - 1) {
-                   i = 0;
-                   continue;
-               }
-           }
-           return actualSemitone;
-       } else {
-           int actualSemitone = 0;
+        return order == Order.ASC ?
+                countSemitoneAsc(firstNoteIndex, lastNoteIndex, firstNoteAccidental, secondNoteAccidental) :
+                countSemitoneDesc(firstNoteIndex, lastNoteIndex, firstNoteAccidental, secondNoteAccidental);
+    }
 
-           for (int i = firstNoteIndex; i >= 0; i--) {
-               if (SEMITONE_SCALE[i].equals("_")) {
-                   actualSemitone++;
-               }
-               if (i == lastNoteIndex){
-                   return actualSemitone - firstNoteAccidental + secondNoteAccidental;
-               }
-               if (i <= 0) {
-                   i = SEMITONE_SCALE.length;
-                   continue;
-               }
-           }
-           return actualSemitone;
-       }
+    private static int countSemitoneAsc(int firstNoteIndex, int lastNoteIndex,
+                                        int firstNoteAccidental, int secondNoteAccidental){
+        int actualSemitone = 0;
+        for (int i = firstNoteIndex; i <= SEMITONE_SCALE.length; i++) {
+            if (SEMITONE_SCALE[i].equals("_")) {
+                actualSemitone++;
+            }
+            if (i == lastNoteIndex){
+                return actualSemitone - firstNoteAccidental - secondNoteAccidental;
+            }
+            if (i == SEMITONE_SCALE.length - 1) {
+                i = 0;
+                continue;
+            }
+        }
+        return actualSemitone;
+    }
+
+    private static int countSemitoneDesc(int firstNoteIndex, int lastNoteIndex,
+                                         int firstNoteAccidental, int secondNoteAccidental){
+        int actualSemitone = 0;
+
+        for (int i = firstNoteIndex; i >= 0; i--) {
+            if (SEMITONE_SCALE[i].equals("_")) {
+                actualSemitone++;
+            }
+            if (i == lastNoteIndex){
+                return actualSemitone - firstNoteAccidental + secondNoteAccidental;
+            }
+            if (i <= 0) {
+                i = SEMITONE_SCALE.length;
+                continue;
+            }
+        }
+        return actualSemitone;
     }
 
     private static String[] findInterval(String firstNote, String lastNote, Order order){
@@ -79,7 +90,6 @@ public class Intervals {
         if (semitone < 0 ){
             semitone = 1;
         }
-
         return getInterval(Integer.toString(semitone), 1);
     }
 
@@ -121,6 +131,9 @@ public class Intervals {
         return "not found";
     }
 
+    /**
+     * Checks if the note has an accidental and what kind of accidental is it
+     */
     private static int checkAccidental(String firstNote) {
         switch (firstNote.length()) {
             case 1:
@@ -149,6 +162,9 @@ public class Intervals {
         }
     }
 
+    /**
+     * Ads accidental to the note
+     */
     private static String addAccidental(String note, int difference){
         return switch (difference){
             case -2 -> note + ACCIDENTALS[3];
@@ -174,6 +190,9 @@ public class Intervals {
         }
     }
 
+    /**
+     * Returns the index of the note in the array
+     */
     private static int getNoteIndex(String note, String[] arr){
         int index = 0;
         int i = 0;
@@ -230,4 +249,18 @@ public class Intervals {
             return NOTES[index];
         }
     }
+
+    /**
+     * Check if the note is allowed in input
+     */
+    private static boolean isNoteAllowed(String note) {
+        for (String allowedNote : ALLOWEDNOTES) {
+            if (allowedNote.equals(note)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
+
+
